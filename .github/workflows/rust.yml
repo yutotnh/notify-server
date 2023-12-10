@@ -34,7 +34,10 @@ jobs:
 
   test:
     name: cargo-test
-    runs-on: windows-latest # 通知を受け取るためにはデスクトップ環境が必要で、LinuxのCI環境では動かない
+    runs-on: ${{ matrix.os }} # 通知を受け取るためにはデスクトップ環境が必要で、LinuxのCI環境では動かない
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
