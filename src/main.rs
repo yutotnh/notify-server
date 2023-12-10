@@ -47,26 +47,13 @@ async fn index(info: web::Query<NotificationInfo>, req: actix_web::HttpRequest) 
     };
 
     let body = match info.body {
-        Some(ref s) => {
-            notifycation.body(s);
-            s
-        }
+        Some(ref s) => s,
         None => "",
     };
 
-    if req.connection_info().peer_addr().is_some() {
-        if body.is_empty() {
-            notifycation.body(&format!(
-                "Received request from {addr}",
-                addr = req.connection_info().peer_addr().unwrap()
-            ));
-        } else {
-            notifycation.body(&format!(
-                "{body}\n\nReceived request from {addr}",
-                addr = req.connection_info().peer_addr().unwrap()
-            ));
-        }
-    }
+    let body = add_ip_addr_info(req.peer_addr(), body);
+
+    notifycation.body(body.as_str());
 
     notifycation.show().unwrap();
 
@@ -74,6 +61,32 @@ async fn index(info: web::Query<NotificationInfo>, req: actix_web::HttpRequest) 
         summary: Some(summary.to_string()),
         body: Some(body.to_string()),
     })
+}
+
+/// IPアドレスの情報を追加する
+/// # Arguments
+/// * `socket` - ソケットの情報
+/// * `body` - 通知の本文
+/// # Returns
+/// * `String` - bodyにIPアドレスを付加した文字列
+/// # Note
+/// * `socket`が`None`の場合は`body`をそのまま返す
+/// * `socket`が`Some`の場合は`body`の最終行から1行を空けてに`Received request from {addr}`を追加して返す
+fn add_ip_addr_info(socket: Option<std::net::SocketAddr>, body: &str) -> String {
+    match socket {
+        Some(addr) => {
+            if body.is_empty() {
+                format!("Received request from {ip}", ip = addr.ip())
+            } else {
+                format!(
+                    "{body}\n\nReceived request from {ip}",
+                    ip = addr.ip(),
+                    body = body
+                )
+            }
+        }
+        None => body.to_string(),
+    }
 }
 
 #[derive(Debug, Parser)]
@@ -88,4 +101,49 @@ struct Args {
     /// The port to listen on
     #[clap(default_value_t = 12413)]
     port: u16,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add_ip_addr_info() {
+        // 引数がNoneの場合
+        assert_eq!(add_ip_addr_info(None, ""), "");
+
+        assert_eq!(add_ip_addr_info(None, "test"), "test");
+
+        // 引数がSomeの場合
+        let socket = std::net::SocketAddr::from(([192, 168, 0, 1], 12345));
+        assert_eq!(
+            add_ip_addr_info(Some(socket), ""),
+            "Received request from 192.168.0.1"
+        );
+
+        assert_eq!(
+            add_ip_addr_info(Some(socket), "test"),
+            "test\n\nReceived request from 192.168.0.1"
+        );
+
+        assert_eq!(
+            add_ip_addr_info(Some(socket), "test\ntest"),
+            "test\ntest\n\nReceived request from 192.168.0.1"
+        );
+
+        let socket = std::net::SocketAddr::new(
+            std::net::IpAddr::V6(std::net::Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
+            8080,
+        );
+
+        assert_eq!(
+            add_ip_addr_info(Some(socket), ""),
+            "Received request from ::1"
+        );
+
+        assert_eq!(
+            add_ip_addr_info(Some(socket), "test"),
+            "test\n\nReceived request from ::1"
+        );
+    }
 }
