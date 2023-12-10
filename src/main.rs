@@ -1,7 +1,7 @@
 use clap::Parser;
 use notify_rust::Notification;
 
-use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web::{get, web, App, HttpResponse, HttpServer};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -10,6 +10,7 @@ struct NotificationInfo {
     body: Option<String>,
 }
 
+#[get("/")]
 async fn index(info: web::Query<NotificationInfo>) -> HttpResponse {
     let mut notifycation = Notification::new();
 
@@ -47,7 +48,7 @@ async fn main() -> std::io::Result<()> {
         .show()
         .unwrap();
 
-    HttpServer::new(|| App::new().service(web::resource("/").to(index)))
+    HttpServer::new(|| App::new().service(index))
         .bind(("0.0.0.0", args.port))
         .unwrap_or_else(|_| panic!("Failed to bind port {}.", args.port))
         .run()
