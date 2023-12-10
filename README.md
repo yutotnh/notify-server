@@ -1,6 +1,6 @@
 # Notify Server
 
-リクエストを受け取ると、内容をデスクトップに通知する
+When a request is received, desktop notification of the contents is sent.
 
 
 ## Usage
@@ -16,10 +16,20 @@ Options:
   -V, --version  Print version
 ```
 
-## Request
+## Example
 
-```terminal
-$ curl -G http://localhost:12413/ --data-urlencode "summary=Hello" --data-urlencode "body=World"
+### Start Server (Windows)
+
+```console
+./notify-server.exe # default port: 12413
 ```
+
+### Client sends notification
+
+```console
+curl -G http://localhost:12413/ --data-urlencode "summary=Hello" --data-urlencode "body=World"
+```
+
+### Server-side desktop notification
 
 ![notifycation sample](./image/notification-sample.png)
