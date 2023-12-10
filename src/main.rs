@@ -48,7 +48,8 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
 
     HttpServer::new(|| App::new().service(web::resource("/").to(index)))
-        .bind(("0.0.0.0", args.port))?
+        .bind(("0.0.0.0", args.port))
+        .unwrap_or_else(|_| panic!("Failed to bind port {}.", args.port))
         .run()
         .await
 }
