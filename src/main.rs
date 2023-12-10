@@ -1,32 +1,40 @@
 use clap::Parser;
 use notify_rust::Notification;
 
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
-use serde::Deserialize;
+use actix_web::{web, App, HttpResponse, HttpServer};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct NotificationInfo {
     summary: Option<String>,
     body: Option<String>,
 }
 
-async fn index(info: web::Query<NotificationInfo>, req: HttpRequest) -> HttpResponse {
+async fn index(info: web::Query<NotificationInfo>) -> HttpResponse {
+    let mut notifycation = Notification::new();
+
     let summary = match info.summary {
-        Some(ref s) => s,
-        None => "No summary",
+        Some(ref s) => {
+            notifycation.summary(s);
+            s
+        }
+        None => "",
     };
+
     let body = match info.body {
-        Some(ref s) => s,
-        None => "No body",
+        Some(ref s) => {
+            notifycation.body(s);
+            s
+        }
+        None => "",
     };
 
-    Notification::new()
-        .summary(summary)
-        .body(body)
-        .show()
-        .unwrap();
+    notifycation.show().unwrap();
 
-    HttpResponse::Ok().body(format!("Summary: {}, Body: {}", summary, body))
+    HttpResponse::Ok().json(NotificationInfo {
+        summary: Some(summary.to_string()),
+        body: Some(body.to_string()),
+    })
 }
 
 #[actix_web::main]
