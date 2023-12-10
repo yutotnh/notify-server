@@ -150,7 +150,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_index() {
+    async fn test_index_empty() {
         let app = actix_web::test::init_service(App::new().service(index)).await;
 
         let req = actix_web::test::TestRequest::get().uri("/").to_request();
@@ -162,5 +162,25 @@ mod tests {
         let body = String::from_utf8(body.to_vec()).unwrap();
 
         assert_eq!(body, "{\"summary\":\"\",\"body\":\"\"}");
+    }
+
+    #[actix_web::test]
+    async fn test_index_summary_and_body() {
+        let app = actix_web::test::init_service(App::new().service(index)).await;
+
+        let req = actix_web::test::TestRequest::get()
+            .uri("/?summary=summary-test&body=body-test")
+            .to_request();
+        let resp = actix_web::test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+
+        let body = actix_web::test::read_body(resp).await;
+        let body = String::from_utf8(body.to_vec()).unwrap();
+
+        assert_eq!(
+            body,
+            "{\"summary\":\"summary-test\",\"body\":\"body-test\"}"
+        );
     }
 }
