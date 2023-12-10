@@ -34,11 +34,10 @@ jobs:
 
   test:
     name: cargo-test
-    runs-on: ubuntu-latest
+    runs-on: windows-latest # 通知を受け取るためにはデスクトップ環境が必要で、LinuxのCI環境では動かない
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: sudo apt-get install -y libdbus-1-dev # for notify-rust
       - run: cargo test --all -- --nocapture
