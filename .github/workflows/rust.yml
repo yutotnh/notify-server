@@ -40,4 +40,5 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - run: sudo apt-get install -y libdbus-1-dev # for notify-rust
       - run: cargo test --all -- --nocapture
