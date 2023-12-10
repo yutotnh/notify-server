@@ -43,4 +43,4 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: cargo test --all -- --nocapture
+      - run: cargo test --all -- --nocapture --test-threads=1 # 並列にテストを実行した時にmacOSで通知が失敗することがあるため、並列実行を無効化
